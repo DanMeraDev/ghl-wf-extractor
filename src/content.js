@@ -1,11 +1,7 @@
-// content.js — content script (world ISOLATED) en TODOS los frames.
-// Hace de puente: page/inject.js (window.postMessage) <-> extension (chrome.runtime).
-// inject.js se carga como content script en el mundo MAIN (ver manifest.json).
 (function () {
   "use strict";
   var TAG = "ghl-wf-ext";
 
-  // page -> extension
   window.addEventListener("message", function (ev) {
     if (ev.source !== window) return;
     var d = ev.data;
@@ -13,11 +9,10 @@
     try {
       chrome.runtime.sendMessage({ __ghlwf: true, from: "page", payload: d });
     } catch (e) {
-      // el contexto de la extension puede haberse invalidado tras recargar; se ignora.
+
     }
   });
 
-  // extension -> page
   chrome.runtime.onMessage.addListener(function (msg) {
     if (!msg || !msg.__ghlwf || msg.to !== "page") return;
     try {
@@ -25,7 +20,6 @@
     } catch (e) {}
   });
 
-  // ---- Detecta el nombre de la sede/subcuenta desde el almacenamiento de la app ----
   function locId() {
     var m = location.href.match(/\/location\/([^/?#]+)/);
     return m ? m[1] : null;
@@ -90,7 +84,6 @@
     return false;
   }
 
-  // Intenta ya y reintenta mientras la app termina de cargar el estado.
   if (!reportLocName()) {
     var tries = 0;
     var iv = setInterval(function () {

@@ -1,22 +1,17 @@
-// inject.js — corre en el CONTEXTO DE PAGINA (world MAIN) de cada frame.
-// En el iframe del builder de workflows, intercepta (sin alterar) las peticiones a
-// backend.leadconnectorhq.com/workflow para capturar el token/headers de la sesion, y
-// expone handlers para listar y leer workflows re-ejecutando esas mismas peticiones.
 (function () {
   "use strict";
   if (window.__ghlWfExtInjected) return;
   window.__ghlWfExtInjected = true;
 
   var TAG = "ghl-wf-ext";
-  // Coincide con cualquier cluster de produccion/staging/interop del servicio workflow.
+
   var WF_RE = /:\/\/([a-z0-9-]+\.)?backend\.leadconnectorhq\.com\/workflow\//i;
 
-  // Credenciales capturadas de una peticion real del app.
   var creds = {
-    base: null, // ej: https://backend.leadconnectorhq.com/workflow
+    base: null,
     locationId: null,
     sessionId: null,
-    headers: null, // dict de headers a re-enviar (Authorization, Version, Channel, Source, ...)
+    headers: null,
   };
 
   function ready() {
@@ -39,7 +34,7 @@
   }
 
   function lc(obj) {
-    // normaliza keys de headers a minusculas
+
     var out = {};
     if (!obj) return out;
     Object.keys(obj).forEach(function (k) {
@@ -60,7 +55,7 @@
 
       var h = lc(headers);
       if (h.authorization) {
-        // Guarda solo headers utiles y seguros de re-enviar.
+
         var keep = {};
         ["authorization", "version", "channel", "source", "token-id", "accept"].forEach(function (k) {
           if (h[k] != null) keep[k] = h[k];
@@ -72,7 +67,6 @@
     } catch (e) {}
   }
 
-  // ---- Hook de fetch ----
   var origFetch = window.fetch;
   if (origFetch) {
     window.fetch = function (input, init) {
@@ -108,7 +102,6 @@
     };
   }
 
-  // ---- Hook de XMLHttpRequest ----
   var XO = XMLHttpRequest.prototype.open;
   var XS = XMLHttpRequest.prototype.setRequestHeader;
   var XSend = XMLHttpRequest.prototype.send;
@@ -130,10 +123,8 @@
     return XSend.apply(this, arguments);
   };
 
-  // ---- Replay: helpers ----
   function apiFetch(url) {
-    // Sin credentials:'include' — la API usa Bearer token, no cookies. Incluir
-    // credenciales fuerza un CORS mas estricto que la API (Allow-Origin:*) rechaza.
+
     return origFetch.call(window, url, {
       method: "GET",
       headers: creds.headers || {},
@@ -157,8 +148,6 @@
     return o && typeof o === "object" && idOf(o) != null && nameOf(o) != null;
   }
 
-  // Busca recursivamente TODOS los arrays de la respuesta y elige el que mas parece
-  // ser la lista de workflows. Tolera cualquier forma de la respuesta.
   function deepFindArrays(obj, acc, depth) {
     if (!obj || typeof obj !== "object" || depth > 6) return;
     if (Array.isArray(obj)) {
@@ -179,7 +168,7 @@
     acc.forEach(function (arr) {
       if (!arr.length || typeof arr[0] !== "object") return;
       var wf = arr.filter(looksWorkflow).length;
-      // prioriza arrays con objetos "workflow"; si ninguno, arrays de objetos con id.
+
       var score = wf > 0 ? wf * 100000 + arr.length : idOf(arr[0]) != null ? arr.length : 0;
       if (score > bestScore) {
         bestScore = score;
@@ -200,7 +189,6 @@
     };
   }
 
-  // Resumen de estructura (solo tipos y longitudes, sin valores) para diagnostico.
   function debugShape(v, d) {
     if (v === null) return null;
     if (Array.isArray(v)) return "array(" + v.length + ")" + (v.length ? " of " + debugShape(v[0], d - 1) : "");
@@ -222,7 +210,6 @@
     return false;
   }
 
-  // Lee un nivel del arbol: los hijos directos de parentId (o la raiz si es null).
   function listLevel(parentId) {
     var out = [];
     var limit = 100;
@@ -250,8 +237,6 @@
     return page(0);
   }
 
-  // Carga TODO el arbol (todos los niveles). Detecta si /list ya devuelve todo
-  // plano (items con parentId) o si hay que recorrer carpeta por carpeta.
   function loadAll() {
     return listLevel(null).then(function (root) {
       var rootItems = root.items;
@@ -308,7 +293,6 @@
     return apiFetch(url);
   }
 
-  // Descarga concurrente con limite y reporte de progreso.
   function fetchSelected(ids, reqId) {
     var results = [];
     var total = ids.length;
@@ -346,7 +330,6 @@
     });
   }
 
-  // ---- Canal de mensajes desde el content script ----
   window.addEventListener("message", function (ev) {
     var d = ev.data;
     if (!d || d.source !== TAG || d.dir !== "to-page") return;
@@ -388,6 +371,5 @@
     }
   });
 
-  // Anuncia estado inicial (por si ya habia credenciales de una carga previa).
   announce();
 })();

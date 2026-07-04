@@ -1,5 +1,3 @@
-// popup.js — navegador de carpetas estilo GHL: entra/sale de carpetas, raiz con lo
-// suelto, seleccion por workflow o por carpeta entera, y ZIP con subcarpetas.
 "use strict";
 
 var els = {
@@ -19,11 +17,11 @@ var els = {
 
 var tabId = null;
 var port = null;
-var allItems = []; // [{id,name,type,parentId}]
+var allItems = [];
 var byId = {};
-var childrenOf = {}; // parentKey('ROOT'|id) -> [items] ordenados
-var pathStack = []; // [{id,name}] carpeta actual
-var selected = {}; // workflowId -> true
+var childrenOf = {};
+var pathStack = [];
+var selected = {};
 var meta = {};
 var lastDebug = null;
 var reqSeq = 1;
@@ -41,7 +39,6 @@ function escapeHtml(s) {
   });
 }
 
-// ---------- mensajeria ----------
 function connect() {
   port = chrome.runtime.connect({ name: "popup" });
   port.onMessage.addListener(onPortMessage);
@@ -121,7 +118,6 @@ function requestList() {
   send("list");
 }
 
-// ---------- indice / arbol ----------
 function indexItems() {
   byId = {};
   childrenOf = {};
@@ -159,7 +155,6 @@ function descendantWorkflows(folderId) {
   return out;
 }
 
-// nombres de carpetas ancestro (raiz primero) de un item, para la ruta del ZIP
 function folderPathNames(id) {
   var parts = [];
   var cur = byId[id];
@@ -171,7 +166,6 @@ function folderPathNames(id) {
   return parts;
 }
 
-// ---------- render ----------
 function renderTree() {
   var totalWf = allItems.filter(function (i) {
     return i.type === "workflow";
@@ -293,7 +287,7 @@ function workflowRow(w, showPath) {
     if (cb.checked) selected[w.id] = true;
     else delete selected[w.id];
     updateDownloadBtn();
-    // refresca tri-estado de carpetas si estamos en vista de carpetas
+
     if (!(els.search.value || "").trim()) refreshFolderChecks();
   });
   var name = document.createElement("span");
@@ -315,7 +309,7 @@ function workflowRow(w, showPath) {
 }
 
 function refreshFolderChecks() {
-  // recalcula estados de las carpetas visibles sin re-render completo
+
   renderLevel();
 }
 
@@ -349,7 +343,6 @@ function updateDownloadBtn() {
   els.download.disabled = n === 0;
 }
 
-// "Todos"/"Ninguno": aplica a la vista actual (carpeta actual o resultados de busqueda)
 function selectCurrent(val) {
   var targets;
   var q = (els.search.value || "").trim().toLowerCase();
@@ -358,7 +351,7 @@ function selectCurrent(val) {
       return it.type === "workflow" && it.name.toLowerCase().indexOf(q) !== -1;
     });
   } else {
-    // todos los workflows descendientes de la carpeta actual (incluye subcarpetas)
+
     targets = currentKey() === "ROOT" ? descendantWorkflows("ROOT") : descendantWorkflows(currentKey());
   }
   targets.forEach(function (w) {
@@ -368,7 +361,6 @@ function selectCurrent(val) {
   renderTree();
 }
 
-// ---------- descarga ----------
 function updateProgress(done, total) {
   els.progress.style.display = "block";
   var pct = total ? Math.round((done / total) * 100) : 0;
@@ -376,7 +368,6 @@ function updateProgress(done, total) {
   setMsg("Descargando " + done + " / " + total + "...");
 }
 
-// Conserva acentos y unicode; solo reemplaza caracteres ilegales en nombres de archivo.
 function sanitize(name) {
   return String(name == null ? "item" : name)
     .replace(/[\\/:*?"<>|]+/g, " ")
@@ -425,7 +416,6 @@ function buildZip(results) {
 
   var sede = sedeName();
 
-  // Un solo workflow -> JSON directo, sin ZIP. Nombre limpio (sin id).
   if (ok.length === 1) {
     var r0 = ok[0];
     var w0 = byId[r0.id] || { id: r0.id, name: r0.id };
@@ -436,7 +426,6 @@ function buildZip(results) {
     return;
   }
 
-  // Varios -> ZIP con subcarpetas. Nombres limpios; sufijo numerico solo si colisionan.
   var zip = new JSZip();
   var used = {};
   ok.forEach(function (r) {
@@ -466,7 +455,6 @@ function buildZip(results) {
   });
 }
 
-// ---------- eventos UI ----------
 els.search.addEventListener("input", renderTree);
 els.selAll.addEventListener("click", function () {
   selectCurrent(true);
@@ -483,7 +471,6 @@ els.download.addEventListener("click", function () {
   send("fetch", { ids: ids });
 });
 
-// ---------- init ----------
 function init() {
   chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
     if (!tabs || !tabs.length) {
