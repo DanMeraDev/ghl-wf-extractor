@@ -13,6 +13,7 @@ var els = {
   progressBar: document.getElementById("progressBar"),
   msg: document.getElementById("msg"),
   download: document.getElementById("download"),
+  openOpts: document.getElementById("openOpts"),
 };
 
 var tabId = null;
@@ -53,20 +54,15 @@ function send(cmd, extra) {
 }
 function onPortMessage(m) {
   if (!m) return;
-  if (m.kind === "loc-name") {
-    if (m.name) meta.locName = m.name;
-    showLoc();
-    return;
-  }
   if (m.kind === "status-result" || m.kind === "creds") {
     if (m.meta) {
       if (m.meta.locationId) meta.locationId = m.meta.locationId;
       if (m.meta.base) meta.base = m.meta.base;
-      if (m.meta.locName) meta.locName = m.meta.locName;
     }
-    if (m.ready && allItems.length === 0) {
+    if (m.ready) {
       showLoc();
-      requestList();
+      requestSedeName();
+      if (allItems.length === 0) requestList();
     }
     return;
   }
@@ -471,25 +467,128 @@ els.download.addEventListener("click", function () {
   send("fetch", { ids: ids });
 });
 
-function init() {
-  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-    if (!tabs || !tabs.length) {
-      showNoCreds("no-tab");
-      return;
-    }
-    tabId = tabs[0].id;
-    var url = tabs[0].url || "";
-    if (url.indexOf("app.gohighlevel.com") === -1 && url.indexOf("leadconnectorhq.com") === -1) {
-      els.empty.style.display = "block";
-      els.empty.innerHTML = "Abre esta ventana estando en <code>app.gohighlevel.com</code>, dentro de un workflow.";
-      return;
-    }
-    connect();
-    send("status");
-    setTimeout(function () {
-      if (allItems.length === 0 && (!meta || !meta.locationId)) showNoCreds("no-creds");
-    }, 1600);
+// Lee el nombre de la sede/subcuenta desde el localStorage de la pestaña activa
+// (permiso activeTab, concedido al abrir el popup). Mejor esfuerzo; si no lo halla,
+// se usa el locationId.
+function requestSedeName() {
+  if (!tabId || !meta.locationId || meta.locName) return;
+  if (!chrome.scripting || !chrome.scripting.executeScript) return;
+  try {
+    chrome.scripting.executeScript(
+      {
+        target: { tabId: tabId },
+        args: [meta.locationId],
+        func: function (target) {
+          function search(obj, t, d) {
+            if (!obj || typeof obj !== "object" || d > 6) return null;
+            if (Array.isArray(obj)) {
+              for (var i = 0; i < obj.length; i++) {
+                var r = search(obj[i], t, d + 1);
+                if (r) return r;
+              }
+              return null;
+            }
+            var idv = obj.id || obj._id || obj.locationId;
+            if (idv === t && typeof obj.name === "string" && obj.name.trim()) return obj.name.trim();
+            for (var k in obj) {
+              if (Object.prototype.hasOwnProperty.call(obj, k)) {
+                var r2 = search(obj[k], t, d + 1);
+                if (r2) return r2;
+              }
+            }
+            return null;
+          }
+          function tp(v) {
+            try {
+              return JSON.parse(v);
+            } catch (e) {}
+            try {
+              return JSON.parse(atob(v));
+            } catch (e) {}
+            return null;
+          }
+          try {
+            for (var i = 0; i < localStorage.length; i++) {
+              var key = localStorage.key(i);
+              var val = localStorage.getItem(key);
+              if (!val || val.length > 200000) continue;
+              var p = tp(val);
+              if (p) {
+                var r = search(p, target, 0);
+                if (r) return r;
+              }
+            }
+          } catch (e) {}
+          return null;
+        },
+      },
+      function (res) {
+        if (chrome.runtime.lastError) return;
+        var name = res && res[0] && res[0].result;
+        if (name) {
+          meta.locName = name;
+          showLoc();
+        }
+      }
+    );
+  } catch (e) {}
+}
+
+function hostOf(url) {
+  try {
+    return new URL(url).hostname;
+  } catch (e) {
+    return "";
+  }
+}
+
+function isGhlHost(host, domains) {
+  if (!host) return false;
+  if (/(^|\.)leadconnectorhq\.com$/.test(host)) return true;
+  return domains.some(function (d) {
+    return host === d || host.indexOf("." + d) === host.length - d.length - 1;
   });
 }
+
+function init() {
+  chrome.storage.sync.get({ ghlDomains: ["app.gohighlevel.com"] }, function (cfg) {
+    var domains = (cfg && cfg.ghlDomains) || [];
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+      if (!tabs || !tabs.length) {
+        showNoCreds("no-tab");
+        return;
+      }
+      tabId = tabs[0].id;
+      var known = isGhlHost(hostOf(tabs[0].url || ""), domains);
+      connect();
+      send("status");
+      setTimeout(function () {
+        if (allItems.length === 0 && (!meta || !meta.locationId)) {
+          els.toolbar.style.display = "none";
+          els.crumb.style.display = "none";
+          els.list.innerHTML = "";
+          els.empty.style.display = "block";
+          els.download.disabled = true;
+          if (known) {
+            els.empty.innerHTML =
+              "No se detecto la sesion todavia.<br><br>Abre o <b>recarga un workflow</b> en esta pestaña una vez y vuelve a abrir esta ventana.";
+          } else {
+            els.empty.innerHTML =
+              "Esta pestaña no parece un dominio de GHL configurado.<br><br>Abre tu cuenta de GHL en un <b>workflow</b>, o agrega tu dominio en " +
+              '<a href="#" id="openOpts2">Opciones</a>.';
+            var o2 = document.getElementById("openOpts2");
+            if (o2) o2.addEventListener("click", openOptions);
+          }
+        }
+      }, 1600);
+    });
+  });
+}
+
+function openOptions(e) {
+  if (e) e.preventDefault();
+  if (chrome.runtime.openOptionsPage) chrome.runtime.openOptionsPage();
+}
+if (els.openOpts) els.openOpts.addEventListener("click", openOptions);
 
 init();

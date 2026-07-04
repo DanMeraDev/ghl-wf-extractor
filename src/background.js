@@ -9,29 +9,16 @@ chrome.runtime.onMessage.addListener(function (msg, sender) {
   var tabId = sender.tab && sender.tab.id;
   if (tabId == null) return;
 
-  if (msg.from === "loc-name") {
-    state[tabId] = state[tabId] || {};
-    state[tabId].locName = msg.name;
-    if (popupPort) {
-      try {
-        popupPort.postMessage({ kind: "loc-name", tabId: tabId, name: msg.name });
-      } catch (e) {}
-    }
-    return;
-  }
-
   if (msg.from !== "page") return;
   var d = msg.payload || {};
 
   if (d.type === "creds" || d.type === "status-result") {
-    var prev = state[tabId] || {};
     if (d.ready) {
-      state[tabId] = { frameId: sender.frameId, ready: true, meta: d.meta || {}, locName: prev.locName };
+      state[tabId] = { frameId: sender.frameId, ready: true, meta: d.meta || {} };
     }
     if (popupPort) {
       try {
-        var meta = Object.assign({}, d.meta || {}, { locName: (state[tabId] && state[tabId].locName) || prev.locName });
-        popupPort.postMessage({ kind: d.type === "creds" ? "creds" : "status-result", tabId: tabId, ready: !!d.ready, meta: meta, reqId: d.reqId });
+        popupPort.postMessage({ kind: d.type === "creds" ? "creds" : "status-result", tabId: tabId, ready: !!d.ready, meta: d.meta || {}, reqId: d.reqId });
       } catch (e) {}
     }
     return;
@@ -63,13 +50,11 @@ chrome.runtime.onConnect.addListener(function (port) {
 
     if (m.cmd === "status") {
       var st = state[tabId];
-      var ln = st && st.locName;
       if (st && st.ready) {
-        port.postMessage({ kind: "status-result", tabId: tabId, ready: true, meta: Object.assign({}, st.meta, { locName: ln }), reqId: m.reqId });
+        port.postMessage({ kind: "status-result", tabId: tabId, ready: true, meta: st.meta, reqId: m.reqId });
       } else {
-
         sendToPage(tabId, { action: "status", reqId: m.reqId });
-        port.postMessage({ kind: "status-result", tabId: tabId, ready: false, meta: { locName: ln }, reqId: m.reqId });
+        port.postMessage({ kind: "status-result", tabId: tabId, ready: false, meta: {}, reqId: m.reqId });
       }
       return;
     }

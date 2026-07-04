@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Opciones — Extractor de Workflows GHL</title>
+    <style>
+      :root {
+        --bg: #ffffff;
+        --fg: #1b1f24;
+        --muted: #6b7280;
+        --border: #e5e7eb;
+        --accent: #2563eb;
+        --accent-fg: #ffffff;
+        --hover: #f3f4f6;
+        --ok: #16a34a;
+      }
+      * { box-sizing: border-box; }
+      body {
+        max-width: 640px;
+        margin: 40px auto;
+        padding: 0 20px;
+        font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        color: var(--fg);
+        background: var(--bg);
+      }
+      h1 { font-size: 20px; margin: 0 0 4px; }
+      p.sub { color: var(--muted); margin: 0 0 24px; }
+      label { display: block; font-weight: 600; margin-bottom: 6px; }
+      textarea {
+        width: 100%;
+        min-height: 120px;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+        resize: vertical;
+      }
+      .hint { color: var(--muted); font-size: 12px; margin-top: 6px; }
+      .actions { margin-top: 18px; display: flex; gap: 10px; align-items: center; }
+      button {
+        background: var(--accent);
+        color: var(--accent-fg);
+        border: none;
+        border-radius: 8px;
+        padding: 9px 16px;
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button.secondary { background: var(--hover); color: var(--fg); }
+      .status { font-size: 13px; }
+      .status.ok { color: var(--ok); }
+      .box {
+        margin-top: 26px;
+        padding: 14px 16px;
+        background: var(--hover);
+        border-radius: 8px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      code { background: #fff; padding: 1px 5px; border-radius: 4px; }
+    </style>
+  </head>
+  <body>
+    <h1>Extractor de Workflows GHL</h1>
+    <p class="sub">Opciones de la extensión</p>
+
+    <label for="domains">Dominios de GHL</label>
+    <textarea id="domains" placeholder="app.gohighlevel.com&#10;app.tudominio.com"></textarea>
+    <div class="hint">Un dominio por línea. Es el dominio con el que entras a tu cuenta de GHL (white-label o el de GoHighLevel). Solo se usa para reconocer la pestaña y leer el nombre de la sede.</div>
+
+    <div class="actions">
+      <button id="save">Guardar</button>
+      <button id="reset" class="secondary">Restablecer</button>
+      <span class="status" id="status"></span>
+    </div>
+
+    <div class="box">
+      La extracción funciona en cualquier instancia de GHL sin configurar nada, porque el
+      editor de workflows siempre corre en <code>*.leadconnectorhq.com</code>. Configurar tu
+      dominio aquí solo mejora la detección del nombre de la sede/subcuenta y el reconocimiento
+      de la pestaña.
+    </div>
+
+    <script src="options.js"></script>
+  </body>
+</html>

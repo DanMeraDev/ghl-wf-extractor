@@ -1,14 +1,10 @@
 {
   "manifest_version": 3,
   "name": "Extractor de Workflows GHL",
-  "version": "1.0.0",
-  "description": "Exporta los JSON de tus workflows de GoHighLevel: lista todos, eliges cuales y los descarga en un ZIP.",
-  "permissions": ["downloads", "storage", "scripting"],
-  "host_permissions": [
-    "https://app.gohighlevel.com/*",
-    "https://client-app-automation-workflows.leadconnectorhq.com/*",
-    "https://backend.leadconnectorhq.com/*"
-  ],
+  "version": "1.1.0",
+  "description": "Exporta los JSON de tus workflows de GoHighLevel: navega carpetas, eliges cuales y los descarga. Funciona en cualquier dominio de GHL.",
+  "permissions": ["downloads", "storage", "scripting", "activeTab"],
+  "host_permissions": ["https://*.leadconnectorhq.com/*"],
   "action": {
     "default_title": "Extractor de Workflows GHL",
     "default_popup": "src/popup.html",
@@ -26,22 +22,20 @@
   "background": {
     "service_worker": "src/background.js"
   },
+  "options_ui": {
+    "page": "src/options.html",
+    "open_in_tab": true
+  },
   "content_scripts": [
     {
-      "matches": [
-        "https://app.gohighlevel.com/*",
-        "https://client-app-automation-workflows.leadconnectorhq.com/*"
-      ],
+      "matches": ["https://*.leadconnectorhq.com/*"],
       "js": ["src/inject.js"],
       "run_at": "document_start",
       "all_frames": true,
       "world": "MAIN"
     },
     {
-      "matches": [
-        "https://app.gohighlevel.com/*",
-        "https://client-app-automation-workflows.leadconnectorhq.com/*"
-      ],
+      "matches": ["https://*.leadconnectorhq.com/*"],
       "js": ["src/content.js"],
       "run_at": "document_start",
       "all_frames": true,
