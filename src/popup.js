@@ -84,7 +84,7 @@ function onPortMessage(m) {
   if (m.kind === "fetch-result") {
     if (m.ok) buildZip(m.data || []);
     else {
-      setMsg("Error al descargar: " + m.error, "err");
+      setMsg("Download error: " + m.error, "err");
       els.download.disabled = false;
     }
     return;
@@ -92,8 +92,8 @@ function onPortMessage(m) {
 }
 
 function showLoc() {
-  if (meta && meta.locName) els.locLabel.textContent = "Sede: " + meta.locName;
-  else if (meta && meta.locationId) els.locLabel.textContent = "Ubicacion: " + meta.locationId;
+  if (meta && meta.locName) els.locLabel.textContent = "Location: " + meta.locName;
+  else if (meta && meta.locationId) els.locLabel.textContent = "Location ID: " + meta.locationId;
 }
 function showNoCreds(err) {
   els.toolbar.style.display = "none";
@@ -101,16 +101,16 @@ function showNoCreds(err) {
   els.list.innerHTML = "";
   els.empty.style.display = "block";
   if (err && err !== "no-creds") {
-    els.empty.textContent = "No se pudo listar: " + err;
+    els.empty.textContent = "Could not list: " + err;
   } else {
     els.empty.innerHTML =
-      "No se detecto la sesion todavia.<br><br>Abre o <b>recarga un workflow</b> en esta pestaña una vez y vuelve a abrir esta ventana.";
+      "Session not detected yet.<br><br>Open or <b>reload a workflow</b> in this tab once, then reopen this window.";
   }
   els.download.disabled = true;
 }
 function requestList() {
   els.empty.style.display = "block";
-  els.empty.textContent = "Cargando workflows...";
+  els.empty.textContent = "Loading workflows...";
   send("list");
 }
 
@@ -172,12 +172,12 @@ function renderTree() {
     els.empty.style.display = "block";
     if (lastDebug) {
       els.empty.innerHTML =
-        "No se reconocio la lista. Comparte esta estructura para ajustar:" +
+        "The list wasn't recognized. Share this structure so it can be adjusted:" +
         '<pre style="text-align:left;white-space:pre-wrap;background:var(--hover);padding:8px;border-radius:6px;margin-top:8px;user-select:all;font-size:11px;">' +
         escapeHtml(JSON.stringify(lastDebug, null, 2)) +
         "</pre>";
     } else {
-      els.empty.textContent = "No se encontraron workflows en esta ubicacion.";
+      els.empty.textContent = "No workflows found in this location.";
     }
     return;
   }
@@ -207,7 +207,7 @@ function renderCrumb() {
       });
     return s;
   };
-  els.crumb.appendChild(mk("Inicio", 0, pathStack.length === 0));
+  els.crumb.appendChild(mk("Home", 0, pathStack.length === 0));
   pathStack.forEach(function (p, i) {
     var sep = document.createElement("span");
     sep.className = "sep";
@@ -246,7 +246,7 @@ function folderRow(dir) {
   }).length;
 
   var cb = makeCheckbox(desc.length > 0 && selCount === desc.length, selCount > 0 && selCount < desc.length);
-  cb.title = "Seleccionar toda la carpeta";
+  cb.title = "Select the whole folder";
   cb.addEventListener("click", function (e) {
     e.stopPropagation();
     var sel = cb.checked;
@@ -320,7 +320,7 @@ function renderSearch(q) {
     var none = document.createElement("div");
     none.className = "empty";
     none.style.display = "block";
-    none.textContent = "Sin coincidencias.";
+    none.textContent = "No matches.";
     els.list.appendChild(none);
     return;
   }
@@ -335,7 +335,7 @@ function renderSearch(q) {
 
 function updateDownloadBtn() {
   var n = Object.keys(selected).length;
-  els.download.textContent = "Descargar seleccionados (" + n + ")";
+  els.download.textContent = "Download selected (" + n + ")";
   els.download.disabled = n === 0;
 }
 
@@ -361,7 +361,7 @@ function updateProgress(done, total) {
   els.progress.style.display = "block";
   var pct = total ? Math.round((done / total) * 100) : 0;
   els.progressBar.style.width = pct + "%";
-  setMsg("Descargando " + done + " / " + total + "...");
+  setMsg("Downloading " + done + " / " + total + "...");
 }
 
 function sanitize(name) {
@@ -406,7 +406,7 @@ function buildZip(results) {
   els.download.disabled = false;
 
   if (ok.length === 0) {
-    setMsg("No se pudo obtener ningun JSON. " + (failed.length ? "Fallos: " + failed.join(", ") : ""), "err");
+    setMsg("Couldn't fetch any JSON. " + (failed.length ? "Failures: " + failed.join(", ") : ""), "err");
     return;
   }
 
@@ -418,7 +418,7 @@ function buildZip(results) {
     var fn = (sede ? sede + " - " : "") + sanitize(w0.name) + ".json";
     var blob = new Blob([JSON.stringify(r0.json, null, 2)], { type: "application/json" });
     triggerDownload(blob, fn);
-    setMsg("Listo: " + fn + " descargado." + (failed.length ? " " + failed.length + " fallaron." : ""), failed.length ? "err" : "ok");
+    setMsg("Done: " + fn + " downloaded." + (failed.length ? " " + failed.length + " failed." : ""), failed.length ? "err" : "ok");
     return;
   }
 
@@ -440,13 +440,13 @@ function buildZip(results) {
     zip.file(full, JSON.stringify(r.json, null, 2));
   });
 
-  setMsg("Generando ZIP...");
+  setMsg("Generating ZIP...");
   zip.generateAsync({ type: "blob", compression: "DEFLATE" }).then(function (blob) {
     var date = new Date().toISOString().slice(0, 10);
     var zipName = (sede || "workflows-" + ((meta && meta.locationId) || "ghl")) + " - " + date + ".zip";
     triggerDownload(blob, zipName);
-    var txt = "Listo: " + ok.length + " workflow(s) en el ZIP.";
-    if (failed.length) txt += " " + failed.length + " fallaron.";
+    var txt = "Done: " + ok.length + " workflow(s) in the ZIP.";
+    if (failed.length) txt += " " + failed.length + " failed.";
     setMsg(txt, failed.length ? "err" : "ok");
   });
 }
@@ -467,9 +467,9 @@ els.download.addEventListener("click", function () {
   send("fetch", { ids: ids });
 });
 
-// Lee el nombre de la sede/subcuenta desde el localStorage de la pestaña activa
-// (permiso activeTab, concedido al abrir el popup). Mejor esfuerzo; si no lo halla,
-// se usa el locationId.
+// Reads the location/sub-account name from the active tab's localStorage
+// (activeTab permission, granted when the popup opens). Best effort; if not found,
+// the locationId is used.
 function requestSedeName() {
   if (!tabId || !meta.locationId || meta.locName) return;
   if (!chrome.scripting || !chrome.scripting.executeScript) return;
@@ -571,11 +571,11 @@ function init() {
           els.download.disabled = true;
           if (known) {
             els.empty.innerHTML =
-              "No se detecto la sesion todavia.<br><br>Abre o <b>recarga un workflow</b> en esta pestaña una vez y vuelve a abrir esta ventana.";
+              "Session not detected yet.<br><br>Open or <b>reload a workflow</b> in this tab once, then reopen this window.";
           } else {
             els.empty.innerHTML =
-              "Esta pestaña no parece un dominio de GHL configurado.<br><br>Abre tu cuenta de GHL en un <b>workflow</b>, o agrega tu dominio en " +
-              '<a href="#" id="openOpts2">Opciones</a>.';
+              "This tab doesn't look like a configured GHL domain.<br><br>Open your GHL account on a <b>workflow</b>, or add your domain in " +
+              '<a href="#" id="openOpts2">Options</a>.';
             var o2 = document.getElementById("openOpts2");
             if (o2) o2.addEventListener("click", openOptions);
           }

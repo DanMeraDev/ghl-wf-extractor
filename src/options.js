@@ -34,14 +34,14 @@ document.getElementById("save").addEventListener("click", function () {
   var domains = parseDomains(elDomains.value);
   chrome.storage.sync.set({ ghlDomains: domains }, function () {
     elDomains.value = domains.join("\n");
-    flash("Guardado");
+    flash("Saved");
   });
 });
 
 document.getElementById("reset").addEventListener("click", function () {
   chrome.storage.sync.set({ ghlDomains: DEFAULTS }, function () {
     elDomains.value = DEFAULTS.join("\n");
-    flash("Restablecido");
+    flash("Reset");
   });
 });
 

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Extractor de Workflows GHL</title>
+    <title>GHL Workflow Extractor</title>
     <style>
       :root {
         --bg: #ffffff;
@@ -136,16 +136,16 @@
   <body>
     <header style="display: flex; justify-content: space-between; align-items: flex-start">
       <div>
-        <h1>Extractor de Workflows GHL</h1>
+        <h1>GHL Workflow Extractor</h1>
         <div class="loc" id="locLabel"></div>
       </div>
-      <a href="#" id="openOpts" title="Opciones" style="text-decoration: none; font-size: 16px; color: var(--muted)">⚙</a>
+      <a href="#" id="openOpts" title="Options" style="text-decoration: none; font-size: 16px; color: var(--muted)">⚙</a>
     </header>
 
     <div class="toolbar" id="toolbar" style="display: none">
-      <input type="search" id="search" placeholder="Buscar por nombre..." />
-      <button class="linkbtn" id="selAll">Todos</button>
-      <button class="linkbtn" id="selNone">Ninguno</button>
+      <input type="search" id="search" placeholder="Search by name..." />
+      <button class="linkbtn" id="selAll">All</button>
+      <button class="linkbtn" id="selNone">None</button>
     </div>
 
     <div id="crumb" style="display: none"></div>
@@ -156,7 +156,7 @@
     <footer>
       <div class="progress" id="progress"><div id="progressBar"></div></div>
       <div class="msg" id="msg"></div>
-      <button class="primary" id="download" disabled>Descargar seleccionados (0)</button>
+      <button class="primary" id="download" disabled>Download selected (0)</button>
     </footer>
 
     <script src="../lib/jszip.min.js"></script>

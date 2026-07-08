@@ -1,90 +1,93 @@
-# Extractor de Workflows GHL
+# GHL Workflow Extractor
 
-Extensión de Chrome (Manifest V3) para exportar los JSON de tus workflows de GoHighLevel
-sin tener que abrir DevTools y copiar respuestas una por una.
+> 🇪🇸 Versión en español: [README.es.md](README.es.md)
 
-Funciona en **cualquier instancia de GHL** (GoHighLevel o cualquier white-label), porque el
-editor de workflows siempre corre dentro de un iframe de `*.leadconnectorhq.com`.
+A Chrome extension (Manifest V3) that exports your GoHighLevel workflow JSONs without having
+to open DevTools and copy responses one by one.
 
-En vez del proceso manual (DevTools → Network → filtrar Fetch/XHR → recargar → buscar el
-endpoint con el ID del workflow → copiar el `response`), la extensión:
+It works on **any GHL instance** (GoHighLevel or any white-label), because the workflow
+editor always runs inside an iframe of `*.leadconnectorhq.com`.
 
-1. Captura el token de tu sesión activa (de una petición que el propio GHL ya hace).
-2. Muestra tus workflows en un **navegador de carpetas** igual que la página de GHL.
-3. Marcas los que quieras (workflow por workflow o carpetas enteras), con buscador.
-4. Descarga: **1 workflow → un `.json`**; **varios → un ZIP** con subcarpetas anidadas que
-   replican tus carpetas de GHL.
+Instead of the manual process (DevTools → Network → filter Fetch/XHR → reload → find the
+endpoint with the workflow ID → copy the `response`), the extension:
 
-Todo ocurre localmente en tu navegador, con tu propia sesión. No se envía nada a terceros
-ni se usan CDNs externos.
+1. Captures the token from your active session (from a request GHL itself already makes).
+2. Shows your workflows in a **folder browser**, just like the GHL page.
+3. You check the ones you want (per workflow or whole folders), with a search box.
+4. Downloads them: **1 workflow → a single `.json`**; **several → a ZIP** with nested
+   subfolders that mirror your GHL folders.
 
-## Instalación (modo desarrollador)
+Everything happens locally in your browser, with your own session. Nothing is sent to third
+parties and no external CDNs are used.
 
-1. Abre Chrome y ve a `chrome://extensions`.
-2. Activa el **Modo de desarrollador** (arriba a la derecha).
-3. Clic en **Cargar descomprimida** y selecciona esta carpeta.
-4. (Opcional) Abre las **Opciones** de la extensión y agrega tu dominio de GHL si no es
-   `app.gohighlevel.com` (p. ej. tu white-label). Esto solo mejora el reconocimiento de la
-   pestaña y el nombre de la sede; la extracción funciona igual sin configurarlo.
+## Installation (developer mode)
 
-## Uso
+1. Open Chrome and go to `chrome://extensions`.
+2. Enable **Developer mode** (top right).
+3. Click **Load unpacked** and select this folder.
+4. (Optional) Open the extension's **Options** and add your GHL domain if it isn't
+   `app.gohighlevel.com` (e.g. your white-label). This only improves tab recognition and the
+   location name; extraction works the same without configuring it.
 
-1. Inicia sesión en tu cuenta de GHL.
-2. Abre **cualquier workflow** una vez, o **recarga** la página de un workflow ya abierto.
-   Esto hace que la extensión capture el token de tu sesión.
-   > Si acabas de instalar la extensión, recarga la pestaña del workflow: las extensiones
-   > no se inyectan en pestañas que ya estaban abiertas antes de instalarlas.
-3. Haz clic en el icono de la extensión. Verás tus carpetas y workflows.
-4. Entra a las carpetas, marca lo que quieras (o carpetas completas) y usa el buscador.
-5. Clic en **Descargar seleccionados (N)**:
-   - 1 workflow → `Sede - Nombre.json` (o `Nombre.json` si no se detecta la sede).
-   - Varios → `Sede - fecha.zip` con un `.json` por workflow, en subcarpetas por carpeta de GHL.
+## Usage
 
-## Configuración
+1. Log in to your GHL account.
+2. Open **any workflow** once, or **reload** the page of a workflow that's already open.
+   This makes the extension capture your session token.
+   > If you just installed the extension, reload the workflow tab: extensions are not
+   > injected into tabs that were already open before they were installed.
+3. Click the extension icon. You'll see your folders and workflows.
+4. Enter folders, check what you want (or entire folders), and use the search box.
+5. Click **Download selected (N)**:
+   - 1 workflow → `Location - Name.json` (or `Name.json` if the location isn't detected).
+   - Several → `Location - date.zip` with one `.json` per workflow, in subfolders matching
+     your GHL folders.
 
-En **Opciones** puedes definir los dominios de GHL (uno por línea) con los que entras a tu
-cuenta. Por defecto: `app.gohighlevel.com`. Es opcional: se usa para reconocer la pestaña y
-para leer el nombre de la sede/subcuenta desde la propia app.
+## Configuration
 
-## Cómo funciona (técnico)
+In **Options** you can define the GHL domains (one per line) you use to log in to your
+account. Default: `app.gohighlevel.com`. It's optional: it's used to recognize the tab and to
+read the location/sub-account name from the app itself.
 
-- El editor/lista de workflows corre en un **iframe** de
-  `client-app-automation-workflows.leadconnectorhq.com` (constante en toda instancia de GHL).
-- El JSON de un workflow:
+## How it works (technical)
+
+- The workflow editor/list runs in an **iframe** of
+  `client-app-automation-workflows.leadconnectorhq.com` (constant across every GHL instance).
+- A workflow's JSON:
   `GET https://backend.leadconnectorhq.com/workflow/{locationId}/{workflowId}?includeScheduledPauseInfo=true&sessionId=...`
-  con `Authorization: Bearer ...` (+ headers `Version`, `Channel`, `Source`).
-- El listado (con jerarquía de carpetas):
-  `GET .../workflow/{locationId}/list?limit=&offset=&parentId=`. Los items traen
-  `type` (`directory`/`workflow`) y `parentId`.
-- `src/inject.js` (mundo de la página del iframe) observa esas peticiones para capturar
-  token/headers/sessionId y luego las **re-ejecuta** desde el mismo origen (CORS y auth ya
-  resueltos). `src/content.js` hace de puente, `src/background.js` enruta mensajes, y
-  `src/popup.js` arma el árbol de carpetas y el ZIP (con `lib/jszip.min.js`, local).
-- El nombre de la sede se lee de la pestaña activa vía `chrome.scripting` (permiso
-  `activeTab`), como mejor esfuerzo.
+  with `Authorization: Bearer ...` (+ `Version`, `Channel`, `Source` headers).
+- The listing (with folder hierarchy):
+  `GET .../workflow/{locationId}/list?limit=&offset=&parentId=`. Items carry a
+  `type` (`directory`/`workflow`) and a `parentId`.
+- `src/inject.js` (the iframe's page world) observes those requests to capture
+  token/headers/sessionId and then **replays** them from the same origin (CORS and auth
+  already resolved). `src/content.js` acts as a bridge, `src/background.js` routes messages,
+  and `src/popup.js` builds the folder tree and the ZIP (using `lib/jszip.min.js`, local).
+- The location name is read from the active tab via `chrome.scripting` (the `activeTab`
+  permission), on a best-effort basis.
 
-## Estructura
+## Structure
 
 ```
 .
 ├── manifest.json
 ├── src/
-│   ├── inject.js      # captura token + replay (list / read) en el iframe
-│   ├── content.js     # puente page <-> extensión
-│   ├── background.js  # service worker: enruta mensajes
-│   ├── popup.html / popup.js   # navegador de carpetas, selección, ZIP
-│   └── options.html / options.js  # configuración de dominios
-├── lib/jszip.min.js   # generación de ZIP (local, sin CDN)
+│   ├── inject.js      # token capture + replay (list / read) in the iframe
+│   ├── content.js     # page <-> extension bridge
+│   ├── background.js  # service worker: routes messages
+│   ├── popup.html / popup.js   # folder browser, selection, ZIP
+│   └── options.html / options.js  # domain configuration
+├── lib/jszip.min.js   # ZIP generation (local, no CDN)
 ├── icons/
 └── README.md
 ```
 
-## Solución de problemas
+## Troubleshooting
 
-- **"No se detecto la sesion todavia"**: abre o recarga un workflow una vez y reintenta.
-- **HTTP 401 al descargar**: el token expiró; recarga un workflow y reintenta.
-- **La pestaña no se reconoce**: agrega tu dominio de GHL en Opciones.
+- **"Session not detected yet"**: open or reload a workflow once and retry.
+- **HTTP 401 on download**: the token expired; reload a workflow and retry.
+- **The tab isn't recognized**: add your GHL domain in Options.
 
-## Nota
+## Note
 
-Herramienta de uso personal sobre tus propios datos y tu propia sesión autenticada.
+A tool for personal use on your own data and your own authenticated session.

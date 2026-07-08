@@ -1,12 +1,12 @@
 {
   "manifest_version": 3,
-  "name": "Extractor de Workflows GHL",
+  "name": "GHL Workflow Extractor",
   "version": "1.1.0",
-  "description": "Exporta los JSON de tus workflows de GoHighLevel: navega carpetas, eliges cuales y los descarga. Funciona en cualquier dominio de GHL.",
+  "description": "Export your GoHighLevel workflow JSONs: browse folders, pick the ones you want, and download them. Works on any GHL domain.",
   "permissions": ["downloads", "storage", "scripting", "activeTab"],
   "host_permissions": ["https://*.leadconnectorhq.com/*"],
   "action": {
-    "default_title": "Extractor de Workflows GHL",
+    "default_title": "GHL Workflow Extractor",
     "default_popup": "src/popup.html",
     "default_icon": {
       "16": "icons/icon16.png",

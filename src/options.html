@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Opciones — Extractor de Workflows GHL</title>
+    <title>Options — GHL Workflow Extractor</title>
     <style>
       :root {
         --bg: #ffffff;
@@ -63,24 +63,23 @@
     </style>
   </head>
   <body>
-    <h1>Extractor de Workflows GHL</h1>
-    <p class="sub">Opciones de la extensión</p>
+    <h1>GHL Workflow Extractor</h1>
+    <p class="sub">Extension options</p>
 
-    <label for="domains">Dominios de GHL</label>
-    <textarea id="domains" placeholder="app.gohighlevel.com&#10;app.tudominio.com"></textarea>
-    <div class="hint">Un dominio por línea. Es el dominio con el que entras a tu cuenta de GHL (white-label o el de GoHighLevel). Solo se usa para reconocer la pestaña y leer el nombre de la sede.</div>
+    <label for="domains">GHL domains</label>
+    <textarea id="domains" placeholder="app.gohighlevel.com&#10;app.yourdomain.com"></textarea>
+    <div class="hint">One domain per line. It's the domain you use to log in to your GHL account (white-label or GoHighLevel's own). It's only used to recognize the tab and read the location name.</div>
 
     <div class="actions">
-      <button id="save">Guardar</button>
-      <button id="reset" class="secondary">Restablecer</button>
+      <button id="save">Save</button>
+      <button id="reset" class="secondary">Reset</button>
       <span class="status" id="status"></span>
     </div>
 
     <div class="box">
-      La extracción funciona en cualquier instancia de GHL sin configurar nada, porque el
-      editor de workflows siempre corre en <code>*.leadconnectorhq.com</code>. Configurar tu
-      dominio aquí solo mejora la detección del nombre de la sede/subcuenta y el reconocimiento
-      de la pestaña.
+      Extraction works on any GHL instance without configuring anything, because the workflow
+      editor always runs on <code>*.leadconnectorhq.com</code>. Setting your domain here only
+      improves detection of the location/sub-account name and tab recognition.
     </div>
 
     <script src="options.js"></script>
